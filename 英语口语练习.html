@@ -1,0 +1,1738 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>英语口语学习助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#f97316',
+                        accent: '#10b981',
+                        neutral: '#f3f4f6',
+                        dark: '#1f2937'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif']
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .text-shadow {
+                text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            }
+            .btn-hover {
+                @apply transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1;
+            }
+            .card-hover {
+                @apply transition-all duration-300 hover:shadow-xl;
+            }
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        
+        /* 录音波形动画 */
+        .wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            height: 40px;
+        }
+        .wave span {
+            display: block;
+            width: 3px;
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 3px;
+            animation: wave 1.2s linear infinite;
+            transform-origin: bottom;
+        }
+        .wave span:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+        .wave span:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+        .wave span:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+        .wave span:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+        @keyframes wave {
+            0% {
+                transform: scaleY(0.1);
+            }
+            50% {
+                transform: scaleY(1);
+            }
+            100% {
+                transform: scaleY(0.1);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-md">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <i class="fa fa-microphone text-primary text-2xl"></i>
+                <h1 class="text-xl font-bold text-dark">英语口语学习助手</h1>
+            </div>
+            <div class="flex space-x-4">
+                <button id="nav-study" class="nav-btn px-4 py-2 rounded-md bg-primary text-white font-medium btn-hover">
+                    <i class="fa fa-book mr-1"></i> 单词模式
+                </button>
+                <button id="nav-sentences" class="nav-btn px-4 py-2 rounded-md bg-white text-dark font-medium btn-hover">
+                    <i class="fa fa-comment mr-1"></i> 句子模式
+                </button>
+                <button id="nav-recordings" class="nav-btn px-4 py-2 rounded-md bg-white text-dark font-medium btn-hover">
+                    <i class="fa fa-history mr-1"></i> 录音记录
+                </button>
+                <button id="nav-vocabulary" class="nav-btn px-4 py-2 rounded-md bg-white text-dark font-medium btn-hover">
+                    <i class="fa fa-list mr-1"></i> 单词列表
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容区 -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- 学习模式页面 -->
+        <section id="study-page" class="page active">
+            <!-- 模式切换 -->
+            <div class="mb-8 flex justify-center">
+                <div class="inline-flex rounded-md shadow-sm" role="group">
+                    <button id="sequential-mode" class="mode-btn px-6 py-2 text-sm font-medium bg-primary text-white rounded-l-lg hover:bg-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-300">
+                        <i class="fa fa-sort-amount-asc mr-1"></i> 顺序模式
+                    </button>
+                    <button id="random-mode" class="mode-btn px-6 py-2 text-sm font-medium bg-white text-gray-700 rounded-r-lg border-t border-b border-r border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-300">
+                        <i class="fa fa-random mr-1"></i> 随机7词模式
+                    </button>
+                </div>
+            </div>
+
+            <!-- 单词卡片 -->
+            <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="p-8">
+                    <!-- 单词导航 -->
+                    <div class="flex justify-between items-center mb-6">
+                        <button id="prev-word" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 btn-hover disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fa fa-chevron-left mr-1"></i> 上一个
+                        </button>
+                        <span id="word-progress" class="text-sm text-gray-500">单词 1/23</span>
+                        <button id="next-word" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 btn-hover">
+                            下一个 <i class="fa fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+
+                    <!-- 单词展示 -->
+                    <div class="text-center mb-8">
+                        <h2 id="current-word" class="text-4xl font-bold text-dark mb-2">secretary</h2>
+                        <p id="word-phonetic" class="text-lg text-gray-500 mb-4">[ˈsekrətri]</p>
+                        <p id="word-definition" class="text-xl text-gray-700">秘书</p>
+                    </div>
+
+                    <!-- 发音控制 -->
+                    <div class="flex justify-center mb-8">
+                        <button id="play-pronunciation" class="px-6 py-3 bg-accent text-white rounded-lg btn-hover flex items-center">
+                            <i class="fa fa-volume-up text-xl mr-2"></i> 播放发音
+                        </button>
+                    </div>
+
+                    <!-- 录音控制 -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-lg font-semibold text-center mb-4">练习发音</h3>
+                        
+                        <div class="flex flex-col items-center">
+                            <div id="recording-controls" class="flex space-x-4 mb-4">
+                                <button id="start-recording" class="px-6 py-3 bg-secondary text-white rounded-lg btn-hover flex items-center">
+                                    <i class="fa fa-microphone text-xl mr-2"></i> 开始录音
+                                </button>
+                                <button id="stop-recording" class="px-6 py-3 bg-gray-500 text-white rounded-lg btn-hover flex items-center hidden">
+                                    <i class="fa fa-stop text-xl mr-2"></i> 停止录音
+                                </button>
+                            </div>
+                            
+                            <!-- 录音波形动画 -->
+                            <div id="recording-wave" class="wave hidden mb-4">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            
+                            <!-- 录音时长 -->
+                            <div id="recording-time" class="text-sm text-gray-500 mb-4">00:00</div>
+                            
+                            <!-- 录音播放 -->
+                            <div id="recording-playback" class="hidden w-full">
+                                <div class="flex items-center justify-between bg-gray-100 rounded-lg p-3">
+                                    <div class="flex items-center">
+                                        <i class="fa fa-file-audio-o text-primary text-xl mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-700">你的录音</p>
+                                            <p id="recording-duration" class="text-xs text-gray-500">00:00</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button id="play-recording" class="p-2 text-primary hover:text-blue-700">
+                                            <i class="fa fa-play"></i>
+                                        </button>
+                                        <button id="delete-recording" class="p-2 text-red-500 hover:text-red-700">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 录音记录页面 -->
+        <section id="recordings-page" class="page hidden">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-2xl font-bold text-center mb-6">录音记录</h2>
+                
+                <div id="recordings-list" class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <!-- 录音记录为空状态 -->
+                    <div id="no-recordings" class="p-8 text-center">
+                        <i class="fa fa-microphone-slash text-gray-300 text-5xl mb-4"></i>
+                        <p class="text-gray-500">暂无录音记录</p>
+                        <button id="go-to-study" class="mt-4 px-6 py-2 bg-primary text-white rounded-lg btn-hover">
+                            <i class="fa fa-arrow-left mr-1"></i> 开始学习
+                        </button>
+                    </div>
+                    
+                    <!-- 录音记录列表 -->
+                    <div id="recordings-container" class="divide-y divide-gray-200 hidden">
+                        <!-- 录音记录项会通过JavaScript动态添加 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 单词列表页面 -->
+        <section id="vocabulary-page" class="page hidden">
+            <div class="max-w-3xl mx-auto">
+                <h2 class="text-2xl font-bold text-center mb-6">单词列表</h2>
+                
+                <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-4">
+                        <div class="relative">
+                            <input type="text" id="vocabulary-search" placeholder="搜索单词..." class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <i class="fa fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <div id="vocabulary-list" class="divide-y divide-gray-200">
+                        <!-- 单词列表会通过JavaScript动态添加 -->
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 句子模式页面 -->
+        <section id="sentences-page" class="page hidden">
+            <!-- 模式切换 -->
+            <div class="mb-8 flex justify-center">
+                <div class="inline-flex rounded-md shadow-sm" role="group">
+                    <button id="sentence-sequential-mode" class="sentence-mode-btn px-6 py-2 text-sm font-medium bg-primary text-white rounded-l-lg hover:bg-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-300">
+                        <i class="fa fa-sort-amount-asc mr-1"></i> 顺序模式
+                    </button>
+                    <button id="sentence-random-mode" class="sentence-mode-btn px-6 py-2 text-sm font-medium bg-white text-gray-700 rounded-r-lg border-t border-b border-r border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-300">
+                        <i class="fa fa-random mr-1"></i> 随机3句模式
+                    </button>
+                </div>
+            </div>
+
+            <!-- 句子卡片 -->
+            <div class="max-w-3xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden card-hover">
+                <div class="p-8">
+                    <!-- 句子导航 -->
+                    <div class="flex justify-between items-center mb-6">
+                        <button id="prev-sentence" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 btn-hover disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fa fa-chevron-left mr-1"></i> 上一句
+                        </button>
+                        <span id="sentence-progress" class="text-sm text-gray-500">句子 1/undefined</span>
+                        <button id="next-sentence" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 btn-hover">
+                            下一句 <i class="fa fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+
+                    <!-- 句子展示 -->
+                    <div class="text-center mb-8">
+                        <div class="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4" id="sentence-difficulty">
+                            初级
+                        </div>
+                        <h2 id="current-sentence" class="text-2xl font-bold text-dark mb-4 leading-relaxed">I want to work as a salesperson.</h2>
+                        <div class="bg-gray-50 p-4 rounded-lg inline-block">
+                            <p id="sentence-translation" class="text-xl text-gray-700">我想成为一名销售人员。</p>
+                        </div>
+                    </div>
+
+                    <!-- 发音控制 -->
+                    <div class="flex justify-center mb-8">
+                        <button id="play-sentence" class="px-6 py-3 bg-accent text-white rounded-lg btn-hover flex items-center">
+                            <i class="fa fa-volume-up text-xl mr-2"></i> 播放句子
+                        </button>
+                    </div>
+
+                    <!-- 录音控制 -->
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="text-lg font-semibold text-center mb-4">练习口语</h3>
+                        
+                        <div class="flex flex-col items-center">
+                            <div id="sentence-recording-controls" class="flex space-x-4 mb-4">
+                                <button id="start-sentence-recording" class="px-6 py-3 bg-secondary text-white rounded-lg btn-hover flex items-center">
+                                    <i class="fa fa-microphone text-xl mr-2"></i> 开始录音
+                                </button>
+                                <button id="stop-sentence-recording" class="px-6 py-3 bg-gray-500 text-white rounded-lg btn-hover flex items-center hidden">
+                                    <i class="fa fa-stop text-xl mr-2"></i> 停止录音
+                                </button>
+                            </div>
+                            
+                            <!-- 录音波形动画 -->
+                            <div id="sentence-recording-wave" class="wave hidden mb-4">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            
+                            <!-- 录音时长 -->
+                            <div id="sentence-recording-time" class="text-sm text-gray-500 mb-4">00:00</div>
+                            
+                            <!-- 录音播放 -->
+                            <div id="sentence-recording-playback" class="hidden w-full">
+                                <div class="flex items-center justify-between bg-gray-100 rounded-lg p-3">
+                                    <div class="flex items-center">
+                                        <i class="fa fa-file-audio-o text-primary text-xl mr-3"></i>
+                                        <div>
+                                            <p class="text-sm font-medium text-gray-700">你的录音</p>
+                                            <p id="sentence-recording-duration" class="text-xs text-gray-500">00:00</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button id="play-sentence-recording" class="p-2 text-primary hover:text-blue-700">
+                                            <i class="fa fa-play"></i>
+                                        </button>
+                                        <button id="delete-sentence-recording" class="p-2 text-red-500 hover:text-red-700">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部信息 -->
+    <footer class="bg-dark text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center">
+            <p>© 2025 英语口语学习助手 | 专注于帮助您提高英语口语能力</p>
+        </div>
+    </footer>
+
+    <!-- 通知提示 -->
+    <div id="notification" class="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-4 max-w-sm transform translate-y-full opacity-0 transition-all duration-300 flex items-center">
+        <i id="notification-icon" class="fa fa-info-circle text-primary mr-3 text-xl"></i>
+        <p id="notification-message" class="text-gray-700"></p>
+    </div>
+
+    <script>
+        // 单词数据
+        const vocabularyData = [
+            {
+                word: "secretary",
+                phonetic: "[ˈsekrətri]",
+                definition: "秘书"
+            },
+            {
+                word: "envy",
+                phonetic: "[ˈenvi]",
+                definition: "嫉妒，羡慕"
+            },
+            {
+                word: "envious",
+                phonetic: "[ˈenviəs]",
+                definition: "嫉妒的，羡慕的"
+            },
+            {
+                word: "salesperson",
+                phonetic: "[ˈseɪlzpɜːrsn]",
+                definition: "销售人员"
+            },
+            {
+                word: "take an internship",
+                phonetic: "[teɪk ən ˈɪntɜːrnʃɪp]",
+                definition: "参加实习"
+            },
+            {
+                word: "be envious of",
+                phonetic: "[bi ˈenviəs ʌv]",
+                definition: "嫉妒，羡慕"
+            },
+            {
+                word: "conform",
+                phonetic: "[kənˈfɔːrm]",
+                definition: "遵守，符合"
+            },
+            {
+                word: "professionals setting",
+                phonetic: "[prəˈfeʃənəlz ˈsetɪŋ]",
+                definition: "专业环境"
+            },
+            {
+                word: "principle",
+                phonetic: "[ˈprɪnsəpl]",
+                definition: "原则，原理"
+            },
+            {
+                word: "imperative",
+                phonetic: "[ɪmˈperətɪv]",
+                definition: "必要的，紧急的"
+            },
+            {
+                word: "decorum",
+                phonetic: "[dɪˈkɔːrəm]",
+                definition: "礼仪，得体"
+            },
+            {
+                word: "energize",
+                phonetic: "[ˈenərdʒaɪz]",
+                definition: "使充满活力，激励"
+            },
+            {
+                word: "cooperative",
+                phonetic: "[koʊˈɑːpərətɪv]",
+                definition: "合作的，协作的"
+            },
+            {
+                word: "integrity",
+                phonetic: "[ɪnˈteɡrəti]",
+                definition: "诚实，正直"
+            },
+            {
+                word: "grueling",
+                phonetic: "[ˈɡruːəlɪŋ]",
+                definition: "累垮人的，折磨人的"
+            },
+            {
+                word: "discipline",
+                phonetic: "[ˈdɪsəplɪn]",
+                definition: "纪律，自律"
+            },
+            {
+                word: "work ethic",
+                phonetic: "[wɜːrk ˈeθɪk]",
+                definition: "职业道德"
+            },
+            {
+                word: "head-on",
+                phonetic: "[ˌhɛdˈɒn]",
+                definition: "正面的，直接的"
+            },
+            {
+                word: "a sense of",
+                phonetic: "[ə sens ʌv]",
+                definition: "一种...的感觉"
+            },
+            {
+                word: "self-discipline",
+                phonetic: "[ˌselfˈdɪsəplɪn]",
+                definition: "自律"
+            },
+            {
+                word: "conform to the rules",
+                phonetic: "[kənˈfɔːrm tu ðə ruːlz]",
+                definition: "遵守规则"
+            },
+            {
+                word: "as well as",
+                phonetic: "[æz wel æz]",
+                definition: "也，以及"
+            },
+            {
+                word: "Chinese Dream",
+                phonetic: "[ˌtʃaɪˈniːz driːm]",
+                definition: "中国梦"
+            },
+            {
+                word: "ideal",
+                phonetic: "[aɪˈdiːəl]",
+                definition: "理想的，完美的"
+            },
+            {
+                word: "social practices",
+                phonetic: "[ˈsoʊʃl ˈpræktɪsɪz]",
+                definition: "社会实践"
+            },
+            {
+                word: "face challenges",
+                phonetic: "[feɪs ˈtʃælɪndʒɪz]",
+                definition: "面对挑战"
+            },
+            {
+                word: "professional setting",
+                phonetic: "[prəˈfeʃənl ˈsetɪŋ]",
+                definition: "专业环境"
+            },
+            {
+                word: "strive hard",
+                phonetic: "[straɪv hɑːrd]",
+                definition: "努力奋斗"
+            }
+        ];
+        
+        // 句子数据
+        window.sentenceData = [
+            {
+                sentence: "I want to work as a salesperson.",
+                translation: "我想成为一名销售人员。",
+                difficulty: "初级"
+            },
+            {
+                sentence: "My boss was satisfied with my communication skills.",
+                translation: "我的老板对我的沟通能力很满意。",
+                difficulty: "中级"
+            },
+            {
+                sentence: "I envy you so much.",
+                translation: "我非常羡慕你。",
+                difficulty: "初级"
+            },
+            {
+                sentence: "You know I enjoy regular working hours.",
+                translation: "你知道我喜欢规律的工作时间。",
+                difficulty: "中级"
+            },
+            {
+                sentence: "I wish you good luck.",
+                translation: "祝你好运。",
+                difficulty: "初级"
+            },
+            {
+                sentence: "How you behave and conform to the rules in a professional setting are your work ethics.",
+                translation: "你在专业环境中的行为方式和对规则的遵守程度体现了你的职业道德。",
+                difficulty: "高级"
+            },
+            {
+                sentence: "A person's work ethic is a representation of his character.",
+                translation: "一个人的职业道德是其性格的体现。",
+                difficulty: "高级"
+            },
+            {
+                sentence: "Employers would like to work with people who have a strong work ethic.",
+                translation: "雇主们更愿意与有强烈职业道德的人合作。",
+                difficulty: "高级"
+            }
+        ];
+
+        // 应用状态
+        const appState = {
+            currentModule: 'word', // 'word' 或 'sentence'
+            wordMode: 'sequential', // 'sequential' 或 'random'
+            sentenceMode: 'sequential', // 'sequential' 或 'random3'
+            currentWordIndex: 0,
+            currentSentenceIndex: 0,
+            randomWords: [],
+            randomSentences: [],
+            recordings: [],
+            mediaRecorder: null,
+            audioChunks: [],
+            isRecording: false,
+            recordingStartTime: null,
+            recordingTimer: null,
+            currentRecording: null
+        };
+
+        // DOM 元素
+        const elements = {
+            // 导航按钮
+            navStudy: document.getElementById('nav-study'),
+            navSentences: document.getElementById('nav-sentences'),
+            navRecordings: document.getElementById('nav-recordings'),
+            navVocabulary: document.getElementById('nav-vocabulary'),
+            
+            // 页面
+            studyPage: document.getElementById('study-page'),
+            sentencesPage: document.getElementById('sentences-page'),
+            recordingsPage: document.getElementById('recordings-page'),
+            vocabularyPage: document.getElementById('vocabulary-page'),
+            
+            // 单词模式按钮
+            sequentialMode: document.getElementById('sequential-mode'),
+            randomMode: document.getElementById('random-mode'),
+            
+            // 句子模式按钮
+            sentenceSequentialMode: document.getElementById('sentence-sequential-mode'),
+            sentenceRandomMode: document.getElementById('sentence-random-mode'),
+            
+            // 单词导航
+            prevWord: document.getElementById('prev-word'),
+            nextWord: document.getElementById('next-word'),
+            wordProgress: document.getElementById('word-progress'),
+            
+            // 句子导航
+            prevSentence: document.getElementById('prev-sentence'),
+            nextSentence: document.getElementById('next-sentence'),
+            sentenceProgress: document.getElementById('sentence-progress'),
+            
+            // 单词展示
+            currentWord: document.getElementById('current-word'),
+            wordPhonetic: document.getElementById('word-phonetic'),
+            wordDefinition: document.getElementById('word-definition'),
+            
+            // 句子展示
+            currentSentence: document.getElementById('current-sentence'),
+            sentenceTranslation: document.getElementById('sentence-translation'),
+            sentenceDifficulty: document.getElementById('sentence-difficulty'),
+            
+            // 发音控制
+            playPronunciation: document.getElementById('play-pronunciation'),
+            playSentence: document.getElementById('play-sentence'),
+            
+            // 单词录音控制
+            startRecording: document.getElementById('start-recording'),
+            stopRecording: document.getElementById('stop-recording'),
+            recordingWave: document.getElementById('recording-wave'),
+            recordingTime: document.getElementById('recording-time'),
+            recordingPlayback: document.getElementById('recording-playback'),
+            playRecording: document.getElementById('play-recording'),
+            deleteRecording: document.getElementById('delete-recording'),
+            recordingDuration: document.getElementById('recording-duration'),
+            
+            // 句子录音控制
+            startSentenceRecording: document.getElementById('start-sentence-recording'),
+            stopSentenceRecording: document.getElementById('stop-sentence-recording'),
+            sentenceRecordingWave: document.getElementById('sentence-recording-wave'),
+            sentenceRecordingTime: document.getElementById('sentence-recording-time'),
+            sentenceRecordingPlayback: document.getElementById('sentence-recording-playback'),
+            playSentenceRecording: document.getElementById('play-sentence-recording'),
+            deleteSentenceRecording: document.getElementById('delete-sentence-recording'),
+            sentenceRecordingDuration: document.getElementById('sentence-recording-duration'),
+            
+            // 录音记录
+            noRecordings: document.getElementById('no-recordings'),
+            recordingsContainer: document.getElementById('recordings-container'),
+            goToStudy: document.getElementById('go-to-study'),
+            
+            // 单词列表
+            vocabularySearch: document.getElementById('vocabulary-search'),
+            vocabularyList: document.getElementById('vocabulary-list'),
+            
+            // 通知
+            notification: document.getElementById('notification'),
+            notificationIcon: document.getElementById('notification-icon'),
+            notificationMessage: document.getElementById('notification-message')
+        };
+
+        // 初始化应用
+        function initApp() {
+            // 加载保存的录音
+            loadRecordings();
+            
+            // 初始化单词列表
+            renderVocabularyList();
+            
+            // 更新单词显示
+            updateWordDisplay();
+            
+            // 设置事件监听器
+            setupEventListeners();
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 导航按钮点击事件
+            elements.navStudy.addEventListener('click', () => switchModule('word'));
+            elements.navSentences.addEventListener('click', () => switchModule('sentence'));
+            elements.navRecordings.addEventListener('click', () => showPage('recordings'));
+            elements.navVocabulary.addEventListener('click', () => showPage('vocabulary'));
+            
+            // 单词模式按钮点击事件
+            elements.sequentialMode.addEventListener('click', () => setWordMode('sequential'));
+            elements.randomMode.addEventListener('click', () => setWordMode('random'));
+            
+            // 句子模式按钮点击事件
+            elements.sentenceSequentialMode.addEventListener('click', () => setSentenceMode('sequential'));
+            elements.sentenceRandomMode.addEventListener('click', () => setSentenceMode('random3'));
+            
+            // 单词导航点击事件
+            elements.prevWord.addEventListener('click', goToPrevWord);
+            elements.nextWord.addEventListener('click', goToNextWord);
+            
+            // 句子导航点击事件
+            elements.prevSentence.addEventListener('click', goToPrevSentence);
+            elements.nextSentence.addEventListener('click', goToNextSentence);
+            
+            // 发音按钮点击事件
+            elements.playPronunciation.addEventListener('click', playPronunciation);
+            elements.playSentence.addEventListener('click', playSentence);
+            
+            // 单词录音按钮点击事件
+            elements.startRecording.addEventListener('click', startRecording);
+            elements.stopRecording.addEventListener('click', stopRecording);
+            elements.playRecording.addEventListener('click', playCurrentRecording);
+            elements.deleteRecording.addEventListener('click', deleteCurrentRecording);
+            
+            // 句子录音按钮点击事件
+            elements.startSentenceRecording.addEventListener('click', startSentenceRecording);
+            elements.stopSentenceRecording.addEventListener('click', stopSentenceRecording);
+            elements.playSentenceRecording.addEventListener('click', playCurrentSentenceRecording);
+            elements.deleteSentenceRecording.addEventListener('click', deleteCurrentSentenceRecording);
+            
+            // 录音记录页面事件
+            elements.goToStudy.addEventListener('click', () => switchModule('word'));
+            
+            // 单词列表搜索事件
+            elements.vocabularySearch.addEventListener('input', filterVocabularyList);
+        }
+
+        // 显示指定页面
+        function showPage(pageName) {
+            // 隐藏所有页面
+            elements.studyPage.classList.add('hidden');
+            elements.sentencesPage.classList.add('hidden');
+            elements.recordingsPage.classList.add('hidden');
+            elements.vocabularyPage.classList.add('hidden');
+            
+            // 重置导航按钮样式
+            elements.navStudy.classList.remove('bg-primary', 'text-white');
+            elements.navStudy.classList.add('bg-white', 'text-dark');
+            elements.navSentences.classList.remove('bg-primary', 'text-white');
+            elements.navSentences.classList.add('bg-white', 'text-dark');
+            elements.navRecordings.classList.remove('bg-primary', 'text-white');
+            elements.navRecordings.classList.add('bg-white', 'text-dark');
+            elements.navVocabulary.classList.remove('bg-primary', 'text-white');
+            elements.navVocabulary.classList.add('bg-white', 'text-dark');
+            
+            // 显示选中页面并更新导航按钮样式
+            switch(pageName) {
+                case 'study':
+                    elements.studyPage.classList.remove('hidden');
+                    elements.navStudy.classList.remove('bg-white', 'text-dark');
+                    elements.navStudy.classList.add('bg-primary', 'text-white');
+                    break;
+                case 'sentences':
+                    elements.sentencesPage.classList.remove('hidden');
+                    elements.navSentences.classList.remove('bg-white', 'text-dark');
+                    elements.navSentences.classList.add('bg-primary', 'text-white');
+                    break;
+                case 'recordings':
+                    elements.recordingsPage.classList.remove('hidden');
+                    elements.navRecordings.classList.remove('bg-white', 'text-dark');
+                    elements.navRecordings.classList.add('bg-primary', 'text-white');
+                    renderRecordingsList();
+                    break;
+                case 'vocabulary':
+                    elements.vocabularyPage.classList.remove('hidden');
+                    elements.navVocabulary.classList.remove('bg-white', 'text-dark');
+                    elements.navVocabulary.classList.add('bg-primary', 'text-white');
+                    break;
+            }
+        }
+        
+        // 切换模块（单词/句子）
+        function switchModule(moduleName) {
+            appState.currentModule = moduleName;
+            
+            // 显示对应页面
+            showPage(moduleName === 'word' ? 'study' : 'sentences');
+            
+            // 更新显示
+            if (moduleName === 'word') {
+                updateWordDisplay();
+            } else {
+                updateSentenceDisplay();
+            }
+        }
+
+        // 设置单词模式
+        function setWordMode(mode) {
+            appState.wordMode = mode;
+            
+            // 更新模式按钮样式
+            if (mode === 'sequential') {
+                elements.sequentialMode.classList.remove('bg-white', 'text-gray-700');
+                elements.sequentialMode.classList.add('bg-primary', 'text-white');
+                elements.randomMode.classList.remove('bg-primary', 'text-white');
+                elements.randomMode.classList.add('bg-white', 'text-gray-700');
+                
+                // 重置当前单词索引
+                appState.currentWordIndex = 0;
+            } else {
+                elements.randomMode.classList.remove('bg-white', 'text-gray-700');
+                elements.randomMode.classList.add('bg-primary', 'text-white');
+                elements.sequentialMode.classList.remove('bg-primary', 'text-white');
+                elements.sequentialMode.classList.add('bg-white', 'text-gray-700');
+                
+                // 生成随机7个单词
+                generateRandomWords();
+                appState.currentWordIndex = 0;
+            }
+            
+            // 更新单词显示
+            updateWordDisplay();
+            
+            // 显示通知
+            showNotification('success', mode === 'sequential' ? '已切换到单词顺序模式' : '已切换到单词随机7词模式');
+        }
+        
+        // 设置句子模式
+        function setSentenceMode(mode) {
+            appState.sentenceMode = mode;
+            
+            // 更新模式按钮样式
+            if (mode === 'sequential') {
+                elements.sentenceSequentialMode.classList.remove('bg-white', 'text-gray-700');
+                elements.sentenceSequentialMode.classList.add('bg-primary', 'text-white');
+                elements.sentenceRandomMode.classList.remove('bg-primary', 'text-white');
+                elements.sentenceRandomMode.classList.add('bg-white', 'text-gray-700');
+                
+                // 重置当前句子索引
+                appState.currentSentenceIndex = 0;
+            } else {
+                elements.sentenceRandomMode.classList.remove('bg-white', 'text-gray-700');
+                elements.sentenceRandomMode.classList.add('bg-primary', 'text-white');
+                elements.sentenceSequentialMode.classList.remove('bg-primary', 'text-white');
+                elements.sentenceSequentialMode.classList.add('bg-white', 'text-gray-700');
+                
+                // 生成随机3个句子
+                generateRandomSentences();
+                appState.currentSentenceIndex = 0;
+            }
+            
+            // 更新句子显示
+            updateSentenceDisplay();
+            
+            // 显示通知
+            showNotification('success', mode === 'sequential' ? '已切换到句子顺序模式' : '已切换到句子随机3句模式');
+        }
+
+        // 生成随机7个单词
+        function generateRandomWords() {
+            // 复制完整单词列表
+            const allWords = [...vocabularyData];
+            
+            // 随机打乱
+            for (let i = allWords.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allWords[i], allWords[j]] = [allWords[j], allWords[i]];
+            }
+            
+            // 取前7个
+            appState.randomWords = allWords.slice(0, 7);
+        }
+
+        // 获取当前单词数据
+        function getCurrentWordData() {
+            if (appState.wordMode === 'sequential') {
+                return vocabularyData[appState.currentWordIndex];
+            } else {
+                return appState.randomWords[appState.currentWordIndex];
+            }
+        }
+
+        // 更新单词显示
+        function updateWordDisplay() {
+            const wordData = getCurrentWordData();
+            
+            // 更新单词、音标和释义
+            elements.currentWord.textContent = wordData.word;
+            elements.wordPhonetic.textContent = wordData.phonetic;
+            elements.wordDefinition.textContent = wordData.definition;
+            
+            // 更新进度
+            const totalWords = appState.wordMode === 'sequential' ? vocabularyData.length : appState.randomWords.length;
+            elements.wordProgress.textContent = `单词 ${appState.currentWordIndex + 1}/${totalWords}`;
+            
+            // 更新导航按钮状态
+            elements.prevWord.disabled = appState.currentWordIndex === 0;
+            elements.nextWord.disabled = appState.currentWordIndex === totalWords - 1;
+            
+            // 隐藏录音播放区域
+            elements.recordingPlayback.classList.add('hidden');
+            
+            // 移除检查结果（如果存在）
+            const resultElement = elements.recordingPlayback.nextElementSibling;
+            if (resultElement && resultElement.classList.contains('recording-result')) {
+                resultElement.remove();
+            }
+            
+            // 重置录音状态
+            appState.currentRecording = null;
+        }
+        
+        // 生成随机3个句子
+        function generateRandomSentences() {
+            // 复制完整句子列表
+            const allSentences = [...window.sentenceData];
+            
+            // 随机打乱
+            for (let i = allSentences.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allSentences[i], allSentences[j]] = [allSentences[j], allSentences[i]];
+            }
+            
+            // 取前3个
+            appState.randomSentences = allSentences.slice(0, 3);
+        }
+        
+        // 获取当前句子数据
+        function getCurrentSentenceData() {
+            if (appState.sentenceMode === 'sequential') {
+                return window.sentenceData[appState.currentSentenceIndex];
+            } else {
+                return appState.randomSentences[appState.currentSentenceIndex];
+            }
+        }
+        
+        // 更新句子显示
+        function updateSentenceDisplay() {
+            const currentSentence = getCurrentSentenceData();
+            
+            // 更新句子、翻译和难度
+            elements.currentSentence.innerHTML = createClickableWords(currentSentence.sentence);
+            elements.sentenceTranslation.textContent = currentSentence.translation;
+            elements.sentenceDifficulty.textContent = currentSentence.difficulty;
+            
+            // 根据难度设置不同颜色
+            if (currentSentence.difficulty === '初级') {
+                elements.sentenceDifficulty.className = 'inline-block px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium mb-4';
+            } else if (currentSentence.difficulty === '中级') {
+                elements.sentenceDifficulty.className = 'inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mb-4';
+            } else {
+                elements.sentenceDifficulty.className = 'inline-block px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium mb-4';
+            }
+            
+            // 更新进度
+            const totalSentences = appState.sentenceMode === 'sequential' ? window.sentenceData.length : appState.randomSentences.length;
+            elements.sentenceProgress.textContent = `句子 ${appState.currentSentenceIndex + 1}/${totalSentences}`;
+            
+            // 更新导航按钮状态
+            elements.prevSentence.disabled = appState.currentSentenceIndex === 0;
+            elements.nextSentence.disabled = appState.currentSentenceIndex === totalSentences - 1;
+            
+            // 隐藏录音播放区域
+            elements.sentenceRecordingPlayback.classList.add('hidden');
+            
+            // 移除检查结果（如果存在）
+            const resultElement = elements.sentenceRecordingPlayback.nextElementSibling;
+            if (resultElement && resultElement.classList.contains('recording-result')) {
+                resultElement.remove();
+            }
+            
+            // 重置录音状态
+            appState.currentSentenceRecording = null;
+        }
+
+        // 前进到下一个单词
+        function goToNextWord() {
+            const totalWords = appState.wordMode === 'sequential' ? vocabularyData.length : appState.randomWords.length;
+            
+            if (appState.currentWordIndex < totalWords - 1) {
+                appState.currentWordIndex++;
+                updateWordDisplay();
+            } else {
+                showNotification('info', '已经是最后一个单词了');
+            }
+        }
+
+        // 返回上一个单词
+        function goToPrevWord() {
+            if (appState.currentWordIndex > 0) {
+                appState.currentWordIndex--;
+                updateWordDisplay();
+            } else {
+                showNotification('info', '已经是第一个单词了');
+            }
+        }
+        
+        // 前进到下一个句子
+        function goToNextSentence() {
+            const totalSentences = appState.sentenceMode === 'sequential' ? sentenceData.length : appState.randomSentences.length;
+            
+            if (appState.currentSentenceIndex < totalSentences - 1) {
+                appState.currentSentenceIndex++;
+                updateSentenceDisplay();
+            } else {
+                showNotification('info', '已经是最后一个句子了');
+            }
+        }
+
+        // 返回上一个句子
+        function goToPrevSentence() {
+            if (appState.currentSentenceIndex > 0) {
+                appState.currentSentenceIndex--;
+                updateSentenceDisplay();
+            } else {
+                showNotification('info', '已经是第一个句子了');
+            }
+        }
+
+        // 播放单词发音
+        function playPronunciation() {
+            const word = getCurrentWordData().word;
+            playWordPronunciation(word);
+        }
+        
+        // 播放指定单词的发音
+        function playWordPronunciation(word) {
+            // 在实际应用中，这里会调用发音API
+            // 这里使用模拟发音提示
+            showNotification('info', `正在播放单词 "${word}" 的发音`);
+            
+            // 模拟发音
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            speechSynthesis.speak(utterance);
+        }
+        
+        // 创建可点击的单词元素
+        function createClickableWords(sentence) {
+            // 分割句子为单词（保留标点符号）
+            const words = sentence.match(/[\w']+|[^\w\s]/g);
+            
+            // 为每个单词创建可点击的span元素
+            const clickableWords = words.map(word => {
+                // 检查是否为单词（包含字母）
+                if (/[a-zA-Z]/.test(word)) {
+                    return `<span class="cursor-pointer hover:text-primary hover:underline transition-colors" onclick="playWordPronunciation('${word.replace(/'/g, "\\'")}')">${word}</span>`;
+                }
+                return word;
+            });
+            
+            // 重新组合为句子，添加适当的空格
+            let result = '';
+            for (let i = 0; i < clickableWords.length; i++) {
+                const current = clickableWords[i];
+                const next = i < clickableWords.length - 1 ? clickableWords[i + 1] : '';
+                
+                result += current;
+                
+                // 规则：
+                // 1. 如果当前是单词且下一个是单词：添加空格
+                // 2. 如果当前是单词且下一个是标点：不添加空格
+                // 3. 如果当前是标点且下一个是单词：添加空格
+                // 4. 如果当前是标点且下一个是标点：不添加空格
+                
+                const currentIsWord = /[a-zA-Z]/.test(current);
+                const nextIsWord = /[a-zA-Z]/.test(next);
+                const currentIsPunctuation = /[^\w\s]/.test(current);
+                const nextIsPunctuation = /[^\w\s]/.test(next);
+                
+                if (i < clickableWords.length - 1) {
+                    if (currentIsWord && nextIsWord) {
+                        // 单词 + 单词：添加空格
+                        result += ' ';
+                    } else if (currentIsWord && nextIsPunctuation) {
+                        // 单词 + 标点：不添加空格
+                    } else if (currentIsPunctuation && nextIsWord) {
+                        // 标点 + 单词：添加空格
+                        result += ' ';
+                    } else if (currentIsPunctuation && nextIsPunctuation) {
+                        // 标点 + 标点：不添加空格
+                    }
+                }
+            }
+            
+            return result;
+        }
+        
+        // 播放句子
+        function playSentence() {
+            const sentence = getCurrentSentenceData().sentence;
+            
+            // 在实际应用中，这里会调用发音API
+            // 这里使用模拟发音提示
+            showNotification('info', `正在播放句子`);
+            
+            // 模拟发音
+            const utterance = new SpeechSynthesisUtterance(sentence);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.9; // 稍微放慢语速
+            speechSynthesis.speak(utterance);
+        }
+
+        // 开始录音
+        function startRecording() {
+            // 检查浏览器是否支持录音
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showNotification('error', '您的浏览器不支持录音功能');
+                return;
+            }
+            
+            // 请求麦克风权限
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    // 创建媒体记录器
+                    appState.mediaRecorder = new MediaRecorder(stream);
+                    appState.audioChunks = [];
+                    
+                    // 监听数据可用事件
+                    appState.mediaRecorder.addEventListener('dataavailable', event => {
+                        appState.audioChunks.push(event.data);
+                    });
+                    
+                    // 监听录音结束事件
+                    appState.mediaRecorder.addEventListener('stop', () => {
+                        // 创建音频 blob
+                        const audioBlob = new Blob(appState.audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        
+                        // 保存录音
+                        appState.currentRecording = {
+                            word: getCurrentWordData().word,
+                            url: audioUrl,
+                            blob: audioBlob,
+                            timestamp: new Date().toISOString(),
+                            duration: formatTime(appState.recordingTime)
+                        };
+                        
+                        // 显示录音播放区域
+                        elements.recordingDuration.textContent = appState.currentRecording.duration;
+                        elements.recordingPlayback.classList.remove('hidden');
+                        
+                        // 停止所有音轨
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        // 重置录音状态
+                        appState.isRecording = false;
+                        clearInterval(appState.recordingTimer);
+                        
+                        // 更新UI
+                        elements.startRecording.classList.remove('hidden');
+                        elements.stopRecording.classList.add('hidden');
+                        elements.recordingWave.classList.add('hidden');
+                        elements.recordingTime.textContent = '00:00';
+                        
+                        // 保存录音到本地存储
+                        saveRecording(appState.currentRecording);
+                        
+                        // 检查录音
+                        setTimeout(() => {
+                            checkRecording(appState.currentRecording, 'word');
+                        }, 1000);
+                    });
+                    
+                    // 开始录音
+                    appState.mediaRecorder.start();
+                    appState.isRecording = true;
+                    appState.recordingStartTime = Date.now();
+                    
+                    // 开始计时
+                    appState.recordingTime = 0;
+                    appState.recordingTimer = setInterval(() => {
+                        appState.recordingTime++;
+                        elements.recordingTime.textContent = formatTime(appState.recordingTime);
+                    }, 1000);
+                    
+                    // 更新UI
+                    elements.startRecording.classList.add('hidden');
+                    elements.stopRecording.classList.remove('hidden');
+                    elements.recordingWave.classList.remove('hidden');
+                    
+                    showNotification('success', '录音已开始');
+                })
+                .catch(error => {
+                    console.error('获取麦克风权限失败:', error);
+                    showNotification('error', '无法访问麦克风，请检查权限设置');
+                });
+        }
+
+        // 停止录音
+        function stopRecording() {
+            if (appState.mediaRecorder && appState.isRecording) {
+                appState.mediaRecorder.stop();
+            }
+        }
+
+        // 播放当前录音
+        function playCurrentRecording() {
+            if (appState.currentRecording) {
+                const audio = new Audio(appState.currentRecording.url);
+                audio.play();
+                
+                showNotification('info', '正在播放您的录音');
+            }
+        }
+
+        // 删除当前录音
+        function deleteCurrentRecording() {
+            if (appState.currentRecording) {
+                // 从本地存储中删除
+                deleteRecording(appState.currentRecording.timestamp);
+                
+                // 隐藏录音播放区域
+                elements.recordingPlayback.classList.add('hidden');
+                
+                // 移除检查结果（如果存在）
+                const resultElement = elements.recordingPlayback.nextElementSibling;
+                if (resultElement && resultElement.classList.contains('recording-result')) {
+                    resultElement.remove();
+                }
+                
+                // 释放URL对象
+                URL.revokeObjectURL(appState.currentRecording.url);
+                
+                // 重置当前录音
+                appState.currentRecording = null;
+                
+                showNotification('info', '单词录音已删除');
+            }
+        }
+        
+        // 开始句子录音
+        function startSentenceRecording() {
+            // 检查浏览器是否支持录音
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showNotification('error', '您的浏览器不支持录音功能');
+                return;
+            }
+            
+            // 请求麦克风权限
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    // 创建媒体记录器
+                    appState.mediaRecorder = new MediaRecorder(stream);
+                    appState.audioChunks = [];
+                    
+                    // 监听数据可用事件
+                    appState.mediaRecorder.addEventListener('dataavailable', event => {
+                        appState.audioChunks.push(event.data);
+                    });
+                    
+                    // 监听录音结束事件
+                    appState.mediaRecorder.addEventListener('stop', () => {
+                        // 创建音频 blob
+                        const audioBlob = new Blob(appState.audioChunks, { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        
+                        // 保存录音
+                        appState.currentSentenceRecording = {
+                            sentence: getCurrentSentenceData().sentence,
+                            url: audioUrl,
+                            blob: audioBlob,
+                            timestamp: new Date().toISOString(),
+                            duration: formatTime(appState.recordingTime)
+                        };
+                        
+                        // 显示录音播放区域
+                        elements.sentenceRecordingDuration.textContent = appState.currentSentenceRecording.duration;
+                        elements.sentenceRecordingPlayback.classList.remove('hidden');
+                        
+                        // 停止所有音轨
+                        stream.getTracks().forEach(track => track.stop());
+                        
+                        // 重置录音状态
+                        appState.isRecording = false;
+                        clearInterval(appState.recordingTimer);
+                        
+                        // 更新UI
+                        elements.startSentenceRecording.classList.remove('hidden');
+                        elements.stopSentenceRecording.classList.add('hidden');
+                        elements.sentenceRecordingWave.classList.add('hidden');
+                        elements.sentenceRecordingTime.textContent = '00:00';
+                        
+                        // 保存录音到本地存储
+                        saveSentenceRecording(appState.currentSentenceRecording);
+                        
+                        // 检查录音
+                        setTimeout(() => {
+                            checkRecording(appState.currentSentenceRecording, 'sentence');
+                        }, 1000);
+                    });
+                    
+                    // 开始录音
+                    appState.mediaRecorder.start();
+                    appState.isRecording = true;
+                    appState.recordingStartTime = Date.now();
+                    
+                    // 开始计时
+                    appState.recordingTime = 0;
+                    appState.recordingTimer = setInterval(() => {
+                        appState.recordingTime++;
+                        elements.sentenceRecordingTime.textContent = formatTime(appState.recordingTime);
+                    }, 1000);
+                    
+                    // 更新UI
+                    elements.startSentenceRecording.classList.add('hidden');
+                    elements.stopSentenceRecording.classList.remove('hidden');
+                    elements.sentenceRecordingWave.classList.remove('hidden');
+                    
+                    showNotification('success', '句子录音已开始');
+                })
+                .catch(error => {
+                    console.error('获取麦克风权限失败:', error);
+                    showNotification('error', '无法访问麦克风，请检查权限设置');
+                });
+        }
+        
+        // 停止句子录音
+        function stopSentenceRecording() {
+            if (appState.mediaRecorder && appState.isRecording) {
+                appState.mediaRecorder.stop();
+            }
+        }
+        
+        // 播放当前句子录音
+        function playCurrentSentenceRecording() {
+            if (appState.currentSentenceRecording) {
+                const audio = new Audio(appState.currentSentenceRecording.url);
+                audio.play();
+                
+                showNotification('info', '正在播放您的句子录音');
+            }
+        }
+        
+        // 删除当前句子录音
+        function deleteCurrentSentenceRecording() {
+            if (appState.currentSentenceRecording) {
+                // 从本地存储中删除
+                deleteSentenceRecording(appState.currentSentenceRecording.timestamp);
+                
+                // 隐藏录音播放区域
+                elements.sentenceRecordingPlayback.classList.add('hidden');
+                
+                // 移除检查结果（如果存在）
+                const resultElement = elements.sentenceRecordingPlayback.nextElementSibling;
+                if (resultElement && resultElement.classList.contains('recording-result')) {
+                    resultElement.remove();
+                }
+                
+                // 释放URL对象
+                URL.revokeObjectURL(appState.currentSentenceRecording.url);
+                
+                // 重置当前录音
+                appState.currentSentenceRecording = null;
+                
+                showNotification('info', '句子录音已删除');
+            }
+        }
+        
+        // 检查录音
+        function checkRecording(recording, type) {
+            // 在实际应用中，这里会调用语音识别API进行真正的检查
+            // 这里使用基于多种因素的模拟检查结果
+            
+            // 1. 检查录音是否在正确的页面录制
+            let isMatchingPage = false;
+            if (type === 'word') {
+                const currentWord = getCurrentWordData().word;
+                isMatchingPage = recording.word === currentWord;
+            } else {
+                const currentSentence = getCurrentSentenceData().sentence;
+                isMatchingPage = recording.sentence === currentSentence;
+            }
+            
+            // 2. 计算录音时长与标准时长的匹配度
+            // 标准时长估算：单词约1-2秒，句子约3-8秒（根据长度调整）
+            let standardMinDuration, standardMaxDuration;
+            if (type === 'word') {
+                const wordLength = recording.word.length;
+                standardMinDuration = Math.max(1, Math.floor(wordLength / 5));
+                standardMaxDuration = Math.max(2, Math.ceil(wordLength / 3));
+            } else {
+                const sentenceLength = recording.sentence.length;
+                standardMinDuration = Math.max(3, Math.floor(sentenceLength / 10));
+                standardMaxDuration = Math.max(5, Math.ceil(sentenceLength / 6));
+            }
+            
+            // 解析录音时长（格式：mm:ss）
+            const [minutes, seconds] = recording.duration.split(':').map(Number);
+            const recordingDuration = minutes * 60 + seconds;
+            
+            // 计算时长匹配度（0-100）
+            let durationMatchScore = 0;
+            if (recordingDuration >= standardMinDuration && recordingDuration <= standardMaxDuration) {
+                // 在理想时长范围内
+                durationMatchScore = 100;
+            } else if (recordingDuration < standardMinDuration) {
+                // 录音太短
+                durationMatchScore = Math.max(0, Math.floor(recordingDuration / standardMinDuration * 70));
+            } else {
+                // 录音太长
+                durationMatchScore = Math.max(0, Math.floor((standardMaxDuration * 1.5 - recordingDuration) / (standardMaxDuration * 0.5) * 70));
+            }
+            
+            // 3. 综合计算最终评分
+            let score;
+            if (!isMatchingPage) {
+                // 在错误页面录制的录音得分较低
+                score = Math.floor(Math.random() * 20) + 40; // 40-60之间
+            } else {
+                // 基于时长匹配度，加上一些随机性
+                const baseScore = Math.floor(durationMatchScore * 0.7);
+                const randomFactor = Math.floor(Math.random() * 21) - 5; // -5到15的随机数
+                score = Math.max(60, Math.min(95, baseScore + randomFactor));
+            }
+            
+            // 4. 根据评分确定反馈信息和颜色
+            let feedback, colorClass;
+            if (score >= 90) {
+                feedback = "太棒了！发音非常准确。";
+                colorClass = "bg-green-100 text-green-800";
+            } else if (score >= 80) {
+                feedback = "很好！发音基本准确。";
+                colorClass = "bg-blue-100 text-blue-800";
+            } else if (score >= 70) {
+                feedback = "不错！发音有一些小问题。";
+                colorClass = "bg-yellow-100 text-yellow-800";
+            } else if (score >= 60) {
+                feedback = "继续努力，再多练习几次。";
+                colorClass = "bg-orange-100 text-orange-800";
+            } else {
+                feedback = "录音不匹配当前内容，请在正确的页面重新录制。";
+                colorClass = "bg-red-100 text-red-800";
+            }
+            
+            // 添加额外的针对性反馈
+            if (isMatchingPage) {
+                if (recordingDuration < standardMinDuration * 0.7) {
+                    feedback += " 录音时间太短，尝试放慢语速。";
+                } else if (recordingDuration > standardMaxDuration * 1.3) {
+                    feedback += " 录音时间太长，尝试加快语速。";
+                }
+            }
+            
+            // 创建检查结果元素
+            const resultElement = document.createElement('div');
+            resultElement.className = `mt-4 p-3 rounded-lg ${colorClass} flex items-center`;
+            resultElement.innerHTML = `
+                <div class="flex-1">
+                    <div class="flex items-center mb-1">
+                        <i class="fa fa-check-circle mr-2"></i>
+                        <span class="font-medium">发音检查结果</span>
+                    </div>
+                    <p class="text-sm">${feedback}</p>
+                </div>
+                <div class="flex-shrink-0 w-12 h-12 rounded-full bg-white shadow flex items-center justify-center ml-3">
+                    <span class="text-xl font-bold ${colorClass.replace('bg-', 'text-').replace('-100', '-600')}">${score}</span>
+                </div>
+            `;
+            
+            // 根据类型添加到对应的录音播放区域下方
+            if (type === 'word') {
+                // 移除之前的检查结果（如果存在）
+                const oldResult = elements.recordingPlayback.nextElementSibling;
+                if (oldResult && oldResult.classList.contains('recording-result')) {
+                    oldResult.remove();
+                }
+                
+                // 添加新的检查结果
+                resultElement.classList.add('recording-result');
+                elements.recordingPlayback.parentNode.insertBefore(resultElement, elements.recordingPlayback.nextSibling);
+            } else {
+                // 移除之前的检查结果（如果存在）
+                const oldResult = elements.sentenceRecordingPlayback.nextElementSibling;
+                if (oldResult && oldResult.classList.contains('recording-result')) {
+                    oldResult.remove();
+                }
+                
+                // 添加新的检查结果
+                resultElement.classList.add('recording-result');
+                elements.sentenceRecordingPlayback.parentNode.insertBefore(resultElement, elements.sentenceRecordingPlayback.nextSibling);
+            }
+            
+            // 显示通知
+            showNotification('info', `发音检查完成，得分：${score}`);
+        }
+
+        // 格式化时间（秒 -> MM:SS）
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // 保存单词录音到本地存储
+        function saveRecording(recording) {
+            // 获取已保存的录音
+            let recordings = JSON.parse(localStorage.getItem('englishPracticeRecordings') || '[]');
+            
+            // 添加新录音
+            recordings.push({
+                type: 'word',
+                content: recording.word,
+                timestamp: recording.timestamp,
+                duration: recording.duration
+            });
+            
+            // 保存到本地存储
+            localStorage.setItem('englishPracticeRecordings', JSON.stringify(recordings));
+            
+            // 保存blob到IndexedDB（这里简化处理，实际应用中应该使用IndexedDB）
+            // 由于localStorage不能存储blob，这里只是模拟保存
+            appState.recordings.push(recording);
+        }
+        
+        // 保存句子录音到本地存储
+        function saveSentenceRecording(recording) {
+            // 获取已保存的录音
+            let recordings = JSON.parse(localStorage.getItem('englishPracticeRecordings') || '[]');
+            
+            // 添加新录音
+            recordings.push({
+                type: 'sentence',
+                content: recording.sentence,
+                timestamp: recording.timestamp,
+                duration: recording.duration
+            });
+            
+            // 保存到本地存储
+            localStorage.setItem('englishPracticeRecordings', JSON.stringify(recordings));
+            
+            // 保存blob到IndexedDB（这里简化处理，实际应用中应该使用IndexedDB）
+            // 由于localStorage不能存储blob，这里只是模拟保存
+            appState.recordings.push(recording);
+        }
+
+        // 从本地存储加载录音
+        function loadRecordings() {
+            const recordingsData = JSON.parse(localStorage.getItem('englishPracticeRecordings') || '[]');
+            
+            // 这里简化处理，实际应用中应该从IndexedDB加载blob
+            appState.recordings = recordingsData.map(data => ({
+                word: data.word,
+                timestamp: data.timestamp,
+                duration: data.duration,
+                url: null, // 在实际应用中，这里应该从IndexedDB加载blob并创建URL
+                blob: null
+            }));
+        }
+
+        // 删除录音
+        function deleteRecording(timestamp) {
+            // 获取已保存的录音
+            let recordings = JSON.parse(localStorage.getItem('englishPracticeRecordings') || '[]');
+            
+            // 过滤掉要删除的录音
+            recordings = recordings.filter(recording => recording.timestamp !== timestamp);
+            
+            // 保存到本地存储
+            localStorage.setItem('englishPracticeRecordings', JSON.stringify(recordings));
+            
+            // 更新应用状态
+            appState.recordings = appState.recordings.filter(recording => recording.timestamp !== timestamp);
+        }
+        
+        // 删除句子录音
+        function deleteSentenceRecording(timestamp) {
+            // 获取已保存的录音
+            let recordings = JSON.parse(localStorage.getItem('englishPracticeRecordings') || '[]');
+            
+            // 过滤掉要删除的录音
+            recordings = recordings.filter(recording => recording.timestamp !== timestamp);
+            
+            // 保存到本地存储
+            localStorage.setItem('englishPracticeRecordings', JSON.stringify(recordings));
+            
+            // 更新应用状态
+            appState.recordings = appState.recordings.filter(recording => recording.timestamp !== timestamp);
+        }
+
+        // 渲染录音列表
+        function renderRecordingsList() {
+            // 清空列表
+            elements.recordingsContainer.innerHTML = '';
+            
+            // 检查是否有录音
+            if (appState.recordings.length === 0) {
+                elements.noRecordings.classList.remove('hidden');
+                elements.recordingsContainer.classList.add('hidden');
+                return;
+            }
+            
+            // 显示列表
+            elements.noRecordings.classList.add('hidden');
+            elements.recordingsContainer.classList.remove('hidden');
+            
+            // 按时间倒序排序
+            const sortedRecordings = [...appState.recordings].sort((a, b) => 
+                new Date(b.timestamp) - new Date(a.timestamp)
+            );
+            
+            // 添加录音记录
+            sortedRecordings.forEach(recording => {
+                const date = new Date(recording.timestamp);
+                const formattedDate = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                
+                const recordingItem = document.createElement('div');
+                recordingItem.className = 'p-4 flex items-center justify-between';
+                
+                // 根据录音类型设置不同的图标和样式
+                const isWordRecording = recording.type === 'word';
+                const iconClass = isWordRecording ? 'fa-file-audio-o' : 'fa-file-text-o';
+                const bgClass = isWordRecording ? 'bg-blue-50' : 'bg-green-50';
+                const textClass = isWordRecording ? 'text-blue-800' : 'text-green-800';
+                
+                recordingItem.innerHTML = `
+                    <div class="flex items-center flex-1">
+                        <div class="flex-shrink-0 w-10 h-10 rounded-full ${bgClass} flex items-center justify-center mr-3">
+                            <i class="fa ${iconClass} ${textClass} text-xl"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium text-gray-700 truncate">${recording.content}</p>
+                            <div class="flex items-center mt-1">
+                                <span class="inline-block px-2 py-0.5 text-xs rounded-full ${bgClass} ${textClass}">
+                                    ${isWordRecording ? '单词' : '句子'}
+                                </span>
+                                <p class="text-xs text-gray-500 ml-2">${formattedDate} · ${recording.duration}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 ml-4">
+                        <button class="play-recording-btn p-2 text-primary hover:text-blue-700" data-timestamp="${recording.timestamp}" data-type="${recording.type}">
+                            <i class="fa fa-play"></i>
+                        </button>
+                        <button class="delete-recording-btn p-2 text-red-500 hover:text-red-700" data-timestamp="${recording.timestamp}" data-type="${recording.type}">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                elements.recordingsContainer.appendChild(recordingItem);
+                
+                // 添加事件监听器
+                recordingItem.querySelector('.play-recording-btn').addEventListener('click', () => {
+                    // 在实际应用中，这里应该从IndexedDB加载blob并播放
+                    const typeText = recording.type === 'word' ? '单词' : '句子';
+                    showNotification('info', `正在播放${typeText}录音: "${recording.content}"`);
+                });
+                
+                recordingItem.querySelector('.delete-recording-btn').addEventListener('click', () => {
+                    deleteRecording(recording.timestamp);
+                    renderRecordingsList();
+                    const typeText = recording.type === 'word' ? '单词' : '句子';
+                    showNotification('info', `${typeText}录音已删除`);
+                });
+            });
+        }
+
+        // 渲染单词列表
+        function renderVocabularyList() {
+            // 清空列表
+            elements.vocabularyList.innerHTML = '';
+            
+            // 添加单词
+            vocabularyData.forEach((wordData, index) => {
+                const wordItem = document.createElement('div');
+                wordItem.className = 'p-4 hover:bg-gray-50 transition-colors cursor-pointer';
+                wordItem.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-medium text-gray-800">${wordData.word}</p>
+                            <p class="text-sm text-gray-500">${wordData.phonetic} · ${wordData.definition}</p>
+                        </div>
+                        <span class="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded-full">${index + 1}</span>
+                    </div>
+                `;
+                
+                // 添加点击事件
+                wordItem.addEventListener('click', () => {
+                    // 切换到学习页面
+                    showPage('study');
+                    
+                    // 设置为顺序模式
+                    setMode('sequential');
+                    
+                    // 设置当前单词索引
+                    appState.currentWordIndex = index;
+                    
+                    // 更新单词显示
+                    updateWordDisplay();
+                });
+                
+                elements.vocabularyList.appendChild(wordItem);
+            });
+        }
+
+        // 过滤单词列表
+        function filterVocabularyList() {
+            const searchTerm = elements.vocabularySearch.value.toLowerCase();
+            
+            // 获取所有单词项
+            const wordItems = elements.vocabularyList.querySelectorAll('div');
+            
+            // 过滤单词
+            vocabularyData.forEach((wordData, index) => {
+                const wordItem = wordItems[index];
+                
+                if (wordData.word.toLowerCase().includes(searchTerm) || 
+                    wordData.definition.toLowerCase().includes(searchTerm)) {
+                    wordItem.classList.remove('hidden');
+                } else {
+                    wordItem.classList.add('hidden');
+                }
+            });
+        }
+
+        // 显示通知
+        function showNotification(type, message) {
+            // 设置图标和颜色
+            switch(type) {
+                case 'success':
+                    elements.notificationIcon.className = 'fa fa-check-circle text-green-500 mr-3 text-xl';
+                    break;
+                case 'error':
+                    elements.notificationIcon.className = 'fa fa-exclamation-circle text-red-500 mr-3 text-xl';
+                    break;
+                case 'info':
+                default:
+                    elements.notificationIcon.className = 'fa fa-info-circle text-primary mr-3 text-xl';
+                    break;
+            }
+            
+            // 设置消息
+            elements.notificationMessage.textContent = message;
+            
+            // 显示通知
+            elements.notification.classList.remove('translate-y-full', 'opacity-0');
+            
+            // 3秒后隐藏
+            setTimeout(() => {
+                elements.notification.classList.add('translate-y-full', 'opacity-0');
+            }, 3000);
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+
+</body></html>
+
